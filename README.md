@@ -21,6 +21,6 @@ An example command to run the tool from command line is,
 | FTGO example application | [link](https://github.com/microservices-patterns/ftgo-application) | <a href="resultGraphs/ftgo-application-master.svg" download="ftgo-application-master.svg">View</a> |
 | E-Commerce App | [link](https://github.com/venkataravuri/e-commerce-microservices-sample) | <a href="resultGraphs/ecommerce-microservices.svg" download="ecommerce-microservices.svg">View</a> |
 | Spring PetClinic Application | [link](https://github.com/spring-petclinic/spring-petclinic-microservices) | <a href="resultGraphs/Spring-petclinic.svg" download="Spring-petclinic.svg">View</a> |
-| QBike | [link](https://github.com/JoeCao/qbike) | <a href="resultGraphs/qbike.png" download="qbike.png">View</a> |
+| QBike | [link](https://github.com/JoeCao/qbike) | <a href="https://github.com/clowee/MicroDepGraph/raw/master/resultGraphs/qbike.png">View</a> |
 | Microservice Book Consul Sample | [link](https://github.com/ewolff/microservice-consul) | <a href="resultGraphs/consul-master.png" download="consul-master.png">View</a> |
 | Microservices Book | [link](https://github.com/ewolff/microservice) | <a href="resultGraphs/microservice_sample.png" download="microservice_sample.png">View</a> |
