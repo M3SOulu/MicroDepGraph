@@ -1,6 +1,9 @@
 package com.imranur.microservices.comm.pattern.check.Utils;
 
 import com.imranur.microservices.comm.pattern.check.Models.DockerServices;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
+import com.tinkerpop.blueprints.util.io.graphml.GraphMLWriter;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.MutableGraph;
@@ -123,7 +126,7 @@ public class DockerComposeUtils {
         for (Map<String, Set<String>> entry : serviceMappings) {
             String service = entry.keySet().toString().replace("[", "").replace("]", "");
             Set<String> strings = entry.get(service);
-            strings.forEach(s -> printWriter.println(service.replace("-","_") + "->" + s.replace("-","_") + "[color=blue]"));
+            strings.forEach(s -> printWriter.println(service.replace("-", "_") + "->" + s.replace("-", "_") + "[color=blue]"));
 
         }
         printWriter.print("}");
@@ -142,7 +145,27 @@ public class DockerComposeUtils {
             System.out.println("Invalid permissions.");
         }
 
-
         System.out.println("You can find graph image in output/" + dbName + ".svg");
+    }
+
+    public static void generateGraphMl(String dbName, ArrayList<Map<String, Set<String>>> serviceMappings) throws IOException {
+        Graph graph = new TinkerGraph();
+        for (Map<String, Set<String>> entry : serviceMappings) {
+            String service = entry.keySet().toString().replace("[", "").replace("]", "");
+            graph.addVertex(service);
+        }
+        for (Map<String, Set<String>> entry : serviceMappings) {
+            String service = entry.keySet().toString().replace("[", "").replace("]", "");
+            Set<String> strings = entry.get(service);
+            strings.forEach(s -> {
+                graph.addEdge(service + "->" + s, graph.getVertex(service), graph.getVertex(s), "depends").setProperty("edgelabel", "depends");
+            });
+
+        }
+        OutputStream output = new FileOutputStream("output/" + dbName + ".graphml");
+        GraphMLWriter mlWriter = new GraphMLWriter(graph);
+        mlWriter.setNormalize(true);
+        mlWriter.outputGraph(graph, output);
+        graph.shutdown();
     }
 }
