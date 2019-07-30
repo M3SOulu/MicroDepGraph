@@ -9,7 +9,10 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -26,25 +29,31 @@ public class App {
             System.exit(0);
         }
         //Scanner scan = new Scanner(System.in);
-        String fileName = "docker-compose.yml";
+        String fileName1 = "docker-compose.yml";
+        String fileName2 = "docker-compose.yaml";
         //System.out.println("Enter project directory to search ");
         //String directory = scan.next();
         //String directory = "/home/imran/Thesis_Projects/spring-cloud-microservice-example-master";
         // /home/imran/Thesis_Projects/qbike-master
-        List<Path> dockerFiles = null;
+        List<Path> dockerFile1 = null;
+        List<Path> dockerFile2 = null;
 
         Properties props = System.getProperties();
         props.setProperty("javax.accessibility.assistive_technologies", "");
 
-        dockerFiles = DockerComposeUtils.find(fileName, directory);
+        dockerFile1 = DockerComposeUtils.find(fileName1, directory);
+        dockerFile2 = DockerComposeUtils.find(fileName2, directory);
 
         Representer representer = new Representer();
         representer.getPropertyUtils().setSkipMissingProperties(true);
         Yaml yaml = new Yaml(new Constructor(DockerServices.class), representer);
         DockerServices dockerServices = null;
 
-        if (!dockerFiles.isEmpty()) {
-            InputStream inputStream = new FileInputStream(new File(dockerFiles.get(0).toString()));
+        if (!dockerFile1.isEmpty()) {
+            InputStream inputStream = new FileInputStream(new File(dockerFile1.get(0).toString()));
+            dockerServices = yaml.load(inputStream);
+        } else if (!dockerFile2.isEmpty()) {
+            InputStream inputStream = new FileInputStream(new File(dockerFile2.get(0).toString()));
             dockerServices = yaml.load(inputStream);
         } else {
             System.out.println("no docker files found");
