@@ -23,7 +23,7 @@ After analyzing the project, MicroDepGraph generates dependency graph in three t
 3. An SVG file
 
 ![Example Output](https://raw.githubusercontent.com/clowee/MicroDepGraph/master/resultGraphs/ftgo-application-master.png)
-
+Figure 1. Example MicroDepGraph Output (project spinnaker http://bit.ly/2YQA2S7) 
 
 # List of projects the tool has been currently tested on
 
