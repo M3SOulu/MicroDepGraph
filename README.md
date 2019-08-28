@@ -22,6 +22,8 @@ After analyzing the project, MicroDepGraph generates dependency graph in three t
 2. GraphML file a common format for exchanging graph structure data
 3. An SVG file
 
+![Example Output](https://raw.githubusercontent.com/clowee/MicroDepGraph/master/resultGraphs/ftgo-application-master.png)
+
 
 # List of projects the tool has been currently tested on
 
