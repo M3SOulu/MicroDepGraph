@@ -126,7 +126,7 @@ public class DockerComposeUtils {
         for (Map<String, Set<String>> entry : serviceMappings) {
             String service = entry.keySet().toString().replace("[", "").replace("]", "");
             Set<String> strings = entry.get(service);
-            strings.forEach(s -> printWriter.println(service.replace("-", "_") + "->" + s.replace("-", "_") + "[color=blue]"));
+            strings.forEach(s -> printWriter.println(service.replace("-", "_").replace(".", "_") + "->" + s.replace("-", "_").replace(".", "_") + "[color=blue]"));
 
         }
         printWriter.print("}");
