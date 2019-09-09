@@ -59,7 +59,6 @@ public class DockerComposeUtils {
             return files
                     .filter(f -> f.getFileName().toString().equals(fileName))
                     .collect(Collectors.toList());
-
         }
     }
 
@@ -113,7 +112,7 @@ public class DockerComposeUtils {
     }
 
     public static void generateGraphImage(String dbName, ArrayList<Map<String, Set<String>>> serviceMappings) throws IOException {
-        File dotFile = new File("output//" + dbName + ".dot");
+        File dotFile = new File(dbName + "//" + dbName + ".dot");
 
         if (!dotFile.getParentFile().exists())
             dotFile.getParentFile().mkdirs();
@@ -132,11 +131,11 @@ public class DockerComposeUtils {
         printWriter.print("}");
         printWriter.close();
         // Generating a DOT(graph description language) file
-        MutableGraph g = Parser.read(new FileInputStream(new File("output/" + dbName + ".dot")));
-        Graphviz.fromGraph(g).width(800).render(Format.SVG).toFile(new File("output/" + dbName + ".svg"));
+        MutableGraph g = Parser.read(new FileInputStream(new File(dbName + "/" + dbName + ".dot")));
+        Graphviz.fromGraph(g).width(800).render(Format.SVG).toFile(new File(dbName + "/" + dbName + ".svg"));
 
         try {
-            Files.deleteIfExists(Paths.get("output/" + dbName + ".dot"));
+            Files.deleteIfExists(Paths.get(dbName + "/" + dbName + ".dot"));
         } catch (NoSuchFileException e) {
             System.out.println("No such file/directory exists");
         } catch (DirectoryNotEmptyException e) {
@@ -162,7 +161,7 @@ public class DockerComposeUtils {
             });
 
         }
-        OutputStream output = new FileOutputStream("output/" + dbName + ".graphml");
+        OutputStream output = new FileOutputStream(dbName + "/" + dbName + ".graphml");
         GraphMLWriter mlWriter = new GraphMLWriter(graph);
         mlWriter.setNormalize(true);
         mlWriter.outputGraph(graph, output);

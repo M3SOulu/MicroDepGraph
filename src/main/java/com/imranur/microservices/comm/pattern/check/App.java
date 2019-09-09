@@ -1,9 +1,20 @@
 package com.imranur.microservices.comm.pattern.check;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.imranur.microservices.comm.pattern.check.Models.DockerServices;
 import com.imranur.microservices.comm.pattern.check.Models.ServiceInterDependency;
+import com.imranur.microservices.comm.pattern.check.Models.ServiceInOutDegClass;
+import com.imranur.microservices.comm.pattern.check.Models.Services;
 import com.imranur.microservices.comm.pattern.check.Utils.DBUtilService;
 import com.imranur.microservices.comm.pattern.check.Utils.DockerComposeUtils;
+import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.neo4j.driver.AuthTokens;
+import org.neo4j.driver.Driver;
+import org.neo4j.driver.GraphDatabase;
+import org.neo4j.driver.Session;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.yaml.snakeyaml.Yaml;
@@ -19,8 +30,9 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Matcher;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -80,15 +92,12 @@ public class App {
         }
 
 
-
-
-
         StringBuilder mapping = DockerComposeUtils.getFormattedOutput(serviceMappings);
         System.out.println(mapping.toString());
 
-        //DockerComposeUtils.generateGraphImage(dbName, serviceMappings);
+        DockerComposeUtils.generateGraphImage(dbName, serviceMappings);
 
-        calculateAvgSc(serviceMappings);
+        calculateAvgSc(dbName, serviceMappings);
 
 
         GraphDatabaseService graphDb = DBUtilService.getGraphDatabaseService(dbName);
@@ -100,69 +109,51 @@ public class App {
         transaction.close();
         graphDb.shutdown();
 
-        /*
         // FIXME: This snippet is for saving data to neo4j local db instance
-        Driver driver = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "124"));
+       /* Driver driver = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "124"));
         try (Session session = driver.session()) {
             DockerComposeUtils.saveNodes(serviceMappings, session);
             DockerComposeUtils.makeRelations(serviceMappings, session);
             session.close();
             driver.close();
-        }
-        */
+        }*/
 
-        //DockerComposeUtils.generateGraphMl(dbName, serviceMappings);
+        DockerComposeUtils.generateGraphMl(dbName, serviceMappings);
 
-        ArrayList<Path> servicePaths = new ArrayList<>();
+        HashMap<String, String> servicePaths = new HashMap<>();
         for (String service : serviceLists) {
-            File[] directories = new File(directory).listFiles(File::isDirectory);
-
-            for (File s : directories) {
-                String servicePath = directory + "/" + service;
-                Path folderPath = Paths.get(servicePath);
-                String pattern = ".*" + service + ".*";
-
-
-                // Pattern.matches("[amn]+", "a")
-                // s.toString().regionMatches(true,s.toString().lastIndexOf('/')+1,service,0,service.length())
-                if (Files.exists(s.toPath(), LinkOption.NOFOLLOW_LINKS) && Pattern.matches(pattern, s.toString().toLowerCase().substring(s.toString().lastIndexOf('/')+1))) {
-                    //System.out.println(folderPath + " path found");
-                    servicePaths.add(s.toPath());
-                }
+            Services services = dockerServices.getServices().get(service);
+            String servicePath = null;
+            if (services.getBuild() != null) {
+                servicePath = services.getBuild().substring(services.getBuild().lastIndexOf('/') + 1);
             }
+            servicePaths.put(service, servicePath);
         }
 
+        servicePaths.size();
 
         HashMap<String, Long> serviceNumberofClasses = new HashMap<>();
-        for (Path servicePath : servicePaths) {
-            try (Stream<Path> stream = Files.find(servicePath, 10,
-                    (path, attr) -> path.getFileName().toString().endsWith(".java"))) {
-                int trimIndex = servicePath.toString().lastIndexOf("/");
-                String service = servicePath.toString().substring(trimIndex + 1);
-                long classCount = stream.count();
-                serviceNumberofClasses.put(service, classCount);
+        servicePaths.forEach((s, s2) -> {
+
+            try (Stream<Path> files = Files.walk(Paths.get(directory))) {
+                Optional<Path> stream = files.filter(f -> f.getFileName().toString().equals(s2)).findFirst();
+                System.out.println(stream);
+
+                if(stream.isPresent()){
+                    Stream<Path> stream1 = Files.find(stream.get(), 10,
+                            (path, attr) -> path.getFileName().toString().endsWith(".java"));
+                    long classCount = stream1.count();
+                    serviceNumberofClasses.put(s, classCount);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-        serviceNumberofClasses.size();
-        HashMap<String, Long> finalServiceClasses = new HashMap<>();
-        if(serviceNumberofClasses.size() > serviceLists.size()){
-            ArrayList<String> finalServiceLists = serviceLists;
-            serviceNumberofClasses.forEach((s, aLong) -> {
-                finalServiceLists.forEach(s1 -> {
-                    String pattern = ".*" + s1 + ".*";
-                    if(Pattern.matches(pattern, s.trim())){
-                        finalServiceClasses.put(s1, aLong);
-                    }
-                });
-            });
-        }
+        });
 
-        finalServiceClasses.size();
+        serviceNumberofClasses.size();
     }
 
-    private static void calculateAvgSc(ArrayList<Map<String, Set<String>>> serviceMappings) {
+    private static void calculateAvgSc(String dbName, ArrayList<Map<String, Set<String>>> serviceMappings) throws IOException {
         HashMap<String, Integer> serviceDepNumbers = new HashMap<>();
         ArrayList<ServiceInterDependency> serviceInterDependencies = new ArrayList<>();
         serviceMappings.forEach(stringSetMap -> {
@@ -181,15 +172,56 @@ public class App {
         });
         serviceDepNumbers.size();
 
-        if(serviceInterDependencies.size() > 0){
+        if (serviceInterDependencies.size() > 0) {
             serviceInterDependencies.forEach(serviceInterDependency -> {
                 serviceInterDependencies.forEach(serviceInterDependency1 -> {
-                    if(serviceInterDependency.getFrom().equals(serviceInterDependency1.getTo()) && serviceInterDependency.getTo().equals(serviceInterDependency1.getFrom())){
+                    if (serviceInterDependency.getFrom().equals(serviceInterDependency1.getTo()) && serviceInterDependency.getTo().equals(serviceInterDependency1.getFrom())) {
                         System.out.println(serviceInterDependency.getFrom() + "," + serviceInterDependency.getTo());
 
                     }
                 });
             });
         }
+
+        ArrayList<ServiceInOutDegClass> inOutDegClasses = new ArrayList<>();
+        serviceMappings.forEach(stringSetMap -> {
+            ServiceInOutDegClass service = new ServiceInOutDegClass();
+            String serviceName = stringSetMap.keySet().toString().replace("[", "").replace("]", "");
+            service.setServiceName(serviceName);
+            int inDeg = stringSetMap.values().size();
+            service.setOutDeg(inDeg);
+            AtomicInteger outDeg = new AtomicInteger();
+            serviceMappings.forEach(serviceMap -> {
+                serviceMap.values().forEach(strings -> {
+                    String b = strings.toString().replace("[", "").replace("]", "");
+                    if (serviceName.equals(b)) {
+                        outDeg.getAndIncrement();
+                    }
+                });
+            });
+            service.setInDeg(outDeg.get());
+            service.setMaxDeg(inDeg + outDeg.get());
+            inOutDegClasses.add(service);
+        });
+
+        inOutDegClasses.size();
+
+        // initialize and configure the mapper
+        CsvMapper mapper = new CsvMapper();
+        // we ignore unknown fields or fields not specified in schema, otherwise
+        // writing will fail
+        mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+
+        // initialize the schema
+        CsvSchema schema = CsvSchema.builder().addColumn("serviceName")
+                .addColumn("outDeg").addColumn("inDeg").addColumn("maxDeg").addColumn("numberOfClasses").setUseHeader(true).build();
+
+        // map the bean with our schema for the writer
+        ObjectWriter writer = mapper.writerFor(ServiceInOutDegClass.class).with(schema);
+
+        File tempFile = new File(dbName + "/output.csv");
+        // we write the list of objects
+        writer.writeValues(tempFile).writeAll(inOutDegClasses);
+
     }
 }
