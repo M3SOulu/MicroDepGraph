@@ -21,10 +21,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -97,9 +94,6 @@ public class App {
 
         DockerComposeUtils.generateGraphImage(dbName, serviceMappings);
 
-        calculateAvgSc(dbName, serviceMappings);
-
-
         GraphDatabaseService graphDb = DBUtilService.getGraphDatabaseService(dbName);
         Transaction transaction = graphDb.beginTx();
 
@@ -126,13 +120,15 @@ public class App {
             String servicePath = null;
             if (services.getBuild() != null) {
                 servicePath = services.getBuild().substring(services.getBuild().lastIndexOf('/') + 1);
+            } else if(services.getImage() != null){
+                servicePath = services.getImage().substring(services.getImage().lastIndexOf('/') + 1);
             }
             servicePaths.put(service, servicePath);
         }
 
         servicePaths.size();
 
-        HashMap<String, Long> serviceNumberofClasses = new HashMap<>();
+        HashMap<String, Integer> serviceNumberofClasses = new HashMap<>();
         servicePaths.forEach((s, s2) -> {
 
             try (Stream<Path> files = Files.walk(Paths.get(directory))) {
@@ -142,18 +138,20 @@ public class App {
                 if(stream.isPresent()){
                     Stream<Path> stream1 = Files.find(stream.get(), 10,
                             (path, attr) -> path.getFileName().toString().endsWith(".java"));
-                    long classCount = stream1.count();
+                    int classCount = (int) stream1.count();
                     serviceNumberofClasses.put(s, classCount);
+                } else {
+                    serviceNumberofClasses.put(s, 0);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
-
+        calculateAvgSc(dbName, serviceMappings, serviceNumberofClasses);
         serviceNumberofClasses.size();
     }
 
-    private static void calculateAvgSc(String dbName, ArrayList<Map<String, Set<String>>> serviceMappings) throws IOException {
+    private static void calculateAvgSc(String dbName, ArrayList<Map<String, Set<String>>> serviceMappings, HashMap<String, Integer> serviceNumberofClasses) throws IOException {
         HashMap<String, Integer> serviceDepNumbers = new HashMap<>();
         ArrayList<ServiceInterDependency> serviceInterDependencies = new ArrayList<>();
         serviceMappings.forEach(stringSetMap -> {
@@ -177,7 +175,6 @@ public class App {
                 serviceInterDependencies.forEach(serviceInterDependency1 -> {
                     if (serviceInterDependency.getFrom().equals(serviceInterDependency1.getTo()) && serviceInterDependency.getTo().equals(serviceInterDependency1.getFrom())) {
                         System.out.println(serviceInterDependency.getFrom() + "," + serviceInterDependency.getTo());
-
                     }
                 });
             });
@@ -201,6 +198,7 @@ public class App {
             });
             service.setInDeg(outDeg.get());
             service.setMaxDeg(inDeg + outDeg.get());
+            service.setNumberOfClasses(serviceNumberofClasses.get(serviceName));
             inOutDegClasses.add(service);
         });
 
@@ -223,5 +221,35 @@ public class App {
         // we write the list of objects
         writer.writeValues(tempFile).writeAll(inOutDegClasses);
 
+        HashMap<String, String> CBM = new HashMap<>();
+
+        inOutDegClasses.forEach(service -> {
+            String serviceName = service.getServiceName();
+            int outDeg = service.getOutDeg();
+            int classes = service.getNumberOfClasses();
+            String cbm = "CBM(" + serviceName + ")";
+            if(classes != 0) {
+                double cbmValue = (double) outDeg / (double)classes;
+                CBM.put(cbm, String.valueOf(cbmValue));
+            } else {
+                CBM.put(cbm, "N/A");
+            }
+        });
+
+        String eol = System.getProperty("line.separator");
+
+        try (Writer cbmWriter = new FileWriter(dbName+"/CBM.csv")) {
+            cbmWriter.append("CBM(service)").append(',').append("Value").append(eol);
+            for (Map.Entry<String, String> entry : CBM.entrySet()) {
+                cbmWriter.append(entry.getKey())
+                        .append(',')
+                        .append(entry.getValue())
+                        .append(eol);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace(System.err);
+        }
+
+        CBM.size();
     }
 }

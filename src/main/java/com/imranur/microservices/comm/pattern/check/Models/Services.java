@@ -5,6 +5,7 @@ import java.util.List;
 public class Services {
 
     private String build;
+    private String image;
     private List<String> links;
     private List<String> depends_on;
 
@@ -14,6 +15,14 @@ public class Services {
 
     public void setBuild(String build) {
         this.build = build;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 
     public List<String> getLinks() {
