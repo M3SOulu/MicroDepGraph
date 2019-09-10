@@ -237,7 +237,6 @@ public class App {
         });
 
         String eol = System.getProperty("line.separator");
-
         try (Writer cbmWriter = new FileWriter(dbName+"/CBM.csv")) {
             cbmWriter.append("CBM(service)").append(',').append("Value").append(eol);
             for (Map.Entry<String, String> entry : CBM.entrySet()) {
@@ -251,5 +250,14 @@ public class App {
         }
 
         CBM.size();
+
+        serviceMappings.forEach(stringSetMap -> {
+            String serviceName = stringSetMap.keySet().toString().replace("[", "").replace("]", "");
+            serviceMappings.forEach(stringSetMap1 -> {
+
+            });
+        });
+
+
     }
 }
