@@ -10,11 +10,6 @@ import com.imranur.microservices.comm.pattern.check.Models.ServiceInOutDegClass;
 import com.imranur.microservices.comm.pattern.check.Models.Services;
 import com.imranur.microservices.comm.pattern.check.Utils.DBUtilService;
 import com.imranur.microservices.comm.pattern.check.Utils.DockerComposeUtils;
-import org.apache.commons.text.similarity.LevenshteinDistance;
-import org.neo4j.driver.AuthTokens;
-import org.neo4j.driver.Driver;
-import org.neo4j.driver.GraphDatabase;
-import org.neo4j.driver.Session;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.yaml.snakeyaml.Yaml;
@@ -23,13 +18,10 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -227,7 +219,7 @@ public class App {
             String serviceName = service.getServiceName();
             int outDeg = service.getOutDeg();
             int classes = service.getNumberOfClasses();
-            String cbm = "CBM(" + serviceName + ")";
+            String cbm = serviceName;
             if(classes != 0) {
                 double cbmValue = (double) outDeg / (double)classes;
                 CBM.put(cbm, String.valueOf(cbmValue));
@@ -238,7 +230,7 @@ public class App {
 
         String eol = System.getProperty("line.separator");
         try (Writer cbmWriter = new FileWriter(dbName+"/CBM.csv")) {
-            cbmWriter.append("CBM(service)").append(',').append("Value").append(eol);
+            cbmWriter.append("serviceName").append(',').append("value").append(eol);
             for (Map.Entry<String, String> entry : CBM.entrySet()) {
                 cbmWriter.append(entry.getKey())
                         .append(',')
@@ -252,9 +244,19 @@ public class App {
         CBM.size();
 
         serviceMappings.forEach(stringSetMap -> {
-            String serviceName = stringSetMap.keySet().toString().replace("[", "").replace("]", "");
-            serviceMappings.forEach(stringSetMap1 -> {
-
+            String serviceA = stringSetMap.keySet().toString().replace("[", "").replace("]", "");
+            serviceMappings.forEach(serviceB -> {
+                String service_B = serviceB.keySet().toString().replace("[", "").replace("]", "");
+                if(!serviceA.equals(service_B)){
+                    System.out.println(serviceA + "->" +service_B);
+                    AtomicInteger count = new AtomicInteger();
+                    stringSetMap.values().forEach(strings -> {
+                        if(serviceA.equals(strings.toString().replace("[", "").replace("]", ""))){
+                            count.getAndIncrement();
+                        }
+                    });
+                    System.out.println(count.get());
+                }
             });
         });
 
