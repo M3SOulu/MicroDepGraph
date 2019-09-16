@@ -112,7 +112,7 @@ public class App {
             String servicePath = null;
             if (services.getBuild() != null) {
                 servicePath = services.getBuild().substring(services.getBuild().lastIndexOf('/') + 1);
-            } else if(services.getImage() != null){
+            } else if (services.getImage() != null) {
                 servicePath = services.getImage().substring(services.getImage().lastIndexOf('/') + 1);
             }
             servicePaths.put(service, servicePath);
@@ -127,7 +127,7 @@ public class App {
                 Optional<Path> stream = files.filter(f -> f.getFileName().toString().equals(s2)).findFirst();
                 System.out.println(stream);
 
-                if(stream.isPresent()){
+                if (stream.isPresent()) {
                     Stream<Path> stream1 = Files.find(stream.get(), 10,
                             (path, attr) -> path.getFileName().toString().endsWith(".java"));
                     int classCount = (int) stream1.count();
@@ -166,7 +166,7 @@ public class App {
             serviceInterDependencies.forEach(serviceInterDependency -> {
                 serviceInterDependencies.forEach(serviceInterDependency1 -> {
                     if (serviceInterDependency.getFrom().equals(serviceInterDependency1.getTo()) && serviceInterDependency.getTo().equals(serviceInterDependency1.getFrom())) {
-                        System.out.println(serviceInterDependency.getFrom() + "," + serviceInterDependency.getTo());
+                        //System.out.println(serviceInterDependency.getFrom() + "," + serviceInterDependency.getTo());
                     }
                 });
             });
@@ -220,8 +220,8 @@ public class App {
             int outDeg = service.getOutDeg();
             int classes = service.getNumberOfClasses();
             String cbm = serviceName;
-            if(classes != 0) {
-                double cbmValue = (double) outDeg / (double)classes;
+            if (classes != 0) {
+                double cbmValue = (double) outDeg / (double) classes;
                 CBM.put(cbm, String.valueOf(cbmValue));
             } else {
                 CBM.put(cbm, "N/A");
@@ -229,7 +229,7 @@ public class App {
         });
 
         String eol = System.getProperty("line.separator");
-        try (Writer cbmWriter = new FileWriter(dbName+"/CBM.csv")) {
+        try (Writer cbmWriter = new FileWriter(dbName + "/CBM.csv")) {
             cbmWriter.append("serviceName").append(',').append("value").append(eol);
             for (Map.Entry<String, String> entry : CBM.entrySet()) {
                 cbmWriter.append(entry.getKey())
@@ -243,7 +243,7 @@ public class App {
 
         CBM.size();
 
-        serviceMappings.forEach(stringSetMap -> {
+       /* serviceMappings.forEach(stringSetMap -> {
             String serviceA = stringSetMap.keySet().toString().replace("[", "").replace("]", "");
             serviceMappings.forEach(serviceB -> {
                 String service_B = serviceB.keySet().toString().replace("[", "").replace("]", "");
@@ -259,7 +259,55 @@ public class App {
                 }
             });
         });
+*/
+        HashMap<String, Integer> interServiceMap = new HashMap<>();
+        serviceMappings.forEach(stringSetMap -> {
+            String serviceA = stringSetMap.keySet().toString().replace("[", "").replace("]", "");
 
+            stringSetMap.values().forEach(strings -> {
+                strings.forEach(s -> {
+                    //String serviceB = strings.toString().replace("[", "").replace("]", "");
+                    interServiceMap.put(serviceA + "->" + s, 1);
+                });
+            });
+        });
 
+        interServiceMap.size();
+        HashMap<String, Integer> interService = new HashMap<>();
+        for (Map<String, Set<String>> entry : serviceMappings) {
+            String serviceA = entry.keySet().toString().replace("[", "").replace("]", "");
+            for (Map<String, Set<String>> entry1 : serviceMappings) {
+                String serviceB = entry1.keySet().toString().replace("[", "").replace("]", "");
+                if (!serviceA.equals(serviceB)) {
+                    String service = serviceA + "->" + serviceB;
+                    if (interServiceMap.get(service) != null) {
+                        System.out.println(service + "-" + 1);
+                        interService.put(service, 1);
+                    } else {
+                        System.out.println(service + "-" + 0);
+                        interService.put(service, 0);
+                    }
+                }
+            }
+        }
+        AtomicInteger maxDeg = new AtomicInteger();
+
+        serviceMappings.forEach(stringSetMap -> {
+            Collection<Set<String>> size = stringSetMap.values();
+            if(maxDeg.get() < size){
+                maxDeg.set(size);
+            }
+        });
+
+        if (!interService.isEmpty()) {
+            interService.forEach((s, integer) -> {
+                String[] outService = s.split("->");
+                String service = outService[1] + "->" + outService[0];
+                Integer outValue = interService.get(service);
+                double lwf = (double) 1 + outValue / (double) 1 + outValue + integer;
+                double gwf = (double) outValue + integer / (double) outValue + integer;
+
+            });
+        }
     }
 }
