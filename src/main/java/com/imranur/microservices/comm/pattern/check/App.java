@@ -281,10 +281,10 @@ public class App {
                 if (!serviceA.equals(serviceB)) {
                     String service = serviceA + "->" + serviceB;
                     if (interServiceMap.get(service) != null) {
-                        System.out.println(service + "-" + 1);
+                        //System.out.println(service + "-" + 1);
                         interService.put(service, 1);
                     } else {
-                        System.out.println(service + "-" + 0);
+                        //System.out.println(service + "-" + 0);
                         interService.put(service, 0);
                     }
                 }
@@ -293,21 +293,42 @@ public class App {
         AtomicInteger maxDeg = new AtomicInteger();
 
         serviceMappings.forEach(stringSetMap -> {
-            Collection<Set<String>> size = stringSetMap.values();
-            if(maxDeg.get() < size){
-                maxDeg.set(size);
+            AtomicInteger size = new AtomicInteger();
+            stringSetMap.values().forEach(strings -> {
+                strings.forEach(s -> {
+                    size.getAndIncrement();
+                });
+            });
+            if(maxDeg.get() < size.get()){
+                maxDeg.set(size.get());
             }
         });
 
+        HashMap<String, Double> scService = new HashMap();
         if (!interService.isEmpty()) {
             interService.forEach((s, integer) -> {
                 String[] outService = s.split("->");
                 String service = outService[1] + "->" + outService[0];
                 Integer outValue = interService.get(service);
                 double lwf = (double) 1 + outValue / (double) 1 + outValue + integer;
-                double gwf = (double) outValue + integer / (double) outValue + integer;
-
+                double gwf = (double) outValue + integer / (double) maxDeg.get();
+                double deg = outValue + integer;
+                double SC = 1-(1/deg) * lwf * gwf;
+                System.out.println(s + "-" + SC);
+                scService.put(s.replace("->",","), SC);
             });
+        }
+
+        try (Writer cbmWriter = new FileWriter(dbName + "/SC.csv")) {
+            cbmWriter.append("SC").append(',').append("value").append(eol);
+            for (Map.Entry<String, Double> entry : scService.entrySet()) {
+                cbmWriter.append("SC("+entry.getKey()+")")
+                        .append(',')
+                        .append(String.valueOf(entry.getValue()))
+                        .append(eol);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace(System.err);
         }
     }
 }
