@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -331,7 +332,9 @@ public class App {
                     double deg = outValue + integer;
                     double SC = 1 - (1 / deg) * lwf * gwf;
                     //System.out.println(s + "-" + SC);
-                    scService.put(s.replace("->", ","), SC);
+                    if(!Double.isNaN(SC)) {
+                        scService.put(s.replace("->", ","), SC);
+                    }
                 }
             });
         }
@@ -347,6 +350,16 @@ public class App {
         } catch (IOException ex) {
             ex.printStackTrace(System.err);
         }
+
+        Double scMax = Collections.max(scService.values());
+        System.out.println("SC max :" + scMax);
+
+        AtomicReference<Double> scTotal = new AtomicReference<>((double) 0);
+        scService.forEach((s, aDouble) -> scTotal.updateAndGet(v -> (double) (v + aDouble)));
+        System.out.println("SC total :" + scTotal);
+
+
+
     }
 
     public static double calculateSD(List<Integer> numArray)
