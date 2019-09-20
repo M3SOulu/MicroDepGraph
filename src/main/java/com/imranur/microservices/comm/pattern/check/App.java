@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -195,6 +196,20 @@ public class App {
         });
 
         inOutDegClasses.size();
+        Optional<ServiceInOutDegClass> max = inOutDegClasses.stream().max(Comparator.comparing(ServiceInOutDegClass::getMaxDeg));
+        System.out.println("Deg max :" + max.get().getMaxDeg());
+
+        double sumDeg = inOutDegClasses.stream().mapToDouble(ServiceInOutDegClass::getMaxDeg).sum();
+        double avgDeg = sumDeg / inOutDegClasses.size();
+
+        System.out.println("Deg avg :" + avgDeg);
+        List<Integer> maxDegList = inOutDegClasses.stream().map(ServiceInOutDegClass::getMaxDeg).collect(Collectors.toList());
+        double degStandardDev = calculateSD(maxDegList);
+        System.out.println("Standard deviation :" + degStandardDev);
+        double medianDeg = median(maxDegList);
+        System.out.println("Deg median :" + medianDeg);
+
+
 
         // initialize and configure the mapper
         CsvMapper mapper = new CsvMapper();
@@ -310,12 +325,14 @@ public class App {
                 String[] outService = s.split("->");
                 String service = outService[1] + "->" + outService[0];
                 Integer outValue = interService.get(service);
-                double lwf = (double) 1 + outValue / (double) 1 + outValue + integer;
-                double gwf = (double) outValue + integer / (double) maxDeg.get();
-                double deg = outValue + integer;
-                double SC = 1-(1/deg) * lwf * gwf;
-                System.out.println(s + "-" + SC);
-                scService.put(s.replace("->",","), SC);
+                if(scService.get(service.replace("->", ",")) == null) {
+                    double lwf = (double) (1 + outValue) / (double) (1 + outValue + integer);
+                    double gwf = (double) (outValue + integer) / (double) maxDeg.get();
+                    double deg = outValue + integer;
+                    double SC = 1 - (1 / deg) * lwf * gwf;
+                    //System.out.println(s + "-" + SC);
+                    scService.put(s.replace("->", ","), SC);
+                }
             });
         }
 
@@ -330,5 +347,37 @@ public class App {
         } catch (IOException ex) {
             ex.printStackTrace(System.err);
         }
+    }
+
+    public static double calculateSD(List<Integer> numArray)
+    {
+        double sum = 0.0, standardDeviation = 0.0;
+        int length = numArray.size();
+        for(double num : numArray) {
+            sum += num;
+        }
+        double mean = sum/length;
+        for(double num: numArray) {
+            standardDeviation += Math.pow(num - mean, 2);
+        }
+        return Math.sqrt(standardDeviation/length);
+    }
+
+    static double median(List<Integer> values) {
+        // sort array
+        Collections.sort(values);
+        double median;
+        // get count of scores
+        int totalElements = values.size();
+        // check if total number of scores is even
+        if (totalElements % 2 == 0) {
+            int sumOfMiddleElements = values.get(totalElements / 2) + values.get(totalElements / 2 - 1);
+            // calculate average of middle elements
+            median = ((double) sumOfMiddleElements) / 2;
+        } else {
+            // get the middle element
+            median = (double) values.get(values.size() / 2);
+        }
+        return median;
     }
 }
