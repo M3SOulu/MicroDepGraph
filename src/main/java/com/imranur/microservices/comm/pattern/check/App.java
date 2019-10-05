@@ -206,7 +206,8 @@ public class App {
         System.out.println("Deg avg :" + avgDeg);
         List<Integer> maxDegList = inOutDegClasses.stream().map(ServiceInOutDegClass::getMaxDeg).collect(Collectors.toList());
         double degStandardDev = calculateSD(maxDegList);
-        System.out.println("Standard deviation :" + degStandardDev);
+        System.out.println("Deg Standard deviation :" + degStandardDev);
+
         double medianDeg = median(maxDegList);
         System.out.println("Deg median :" + medianDeg);
 
@@ -351,18 +352,43 @@ public class App {
             ex.printStackTrace(System.err);
         }
 
-        Double scMax = Collections.max(scService.values());
-        System.out.println("SC max :" + scMax);
-
         AtomicReference<Double> scTotal = new AtomicReference<>((double) 0);
         scService.forEach((s, aDouble) -> scTotal.updateAndGet(v -> (double) (v + aDouble)));
         System.out.println("SC total :" + scTotal);
+
+        Double scMax = Collections.max(scService.values());
+        System.out.println("SC max :" + scMax);
+
+        double scAvg = scTotal.get() / (double) scService.size();
+        System.out.println("SC Average : " + scAvg);
+
+        ArrayList<Double> scValues = new ArrayList<>(scService.values());
+
+        double scMedian = medianDouble(scValues);
+        System.out.println("SC median " + scMedian);
+
+        double scStandardDeviation = calculateSDDouble(scValues);
+        System.out.println("SC Standard Deviation : " + scStandardDeviation);
 
 
 
     }
 
     public static double calculateSD(List<Integer> numArray)
+    {
+        double sum = 0.0, standardDeviation = 0.0;
+        int length = numArray.size();
+        for(double num : numArray) {
+            sum += num;
+        }
+        double mean = sum/length;
+        for(double num: numArray) {
+            standardDeviation += Math.pow(num - mean, 2);
+        }
+        return Math.sqrt(standardDeviation/length);
+    }
+
+    public static double calculateSDDouble(List<Double> numArray)
     {
         double sum = 0.0, standardDeviation = 0.0;
         int length = numArray.size();
@@ -385,6 +411,24 @@ public class App {
         // check if total number of scores is even
         if (totalElements % 2 == 0) {
             int sumOfMiddleElements = values.get(totalElements / 2) + values.get(totalElements / 2 - 1);
+            // calculate average of middle elements
+            median = ((double) sumOfMiddleElements) / 2;
+        } else {
+            // get the middle element
+            median = (double) values.get(values.size() / 2);
+        }
+        return median;
+    }
+
+    static double medianDouble(List<Double> values) {
+        // sort array
+        Collections.sort(values);
+        double median;
+        // get count of scores
+        int totalElements = values.size();
+        // check if total number of scores is even
+        if (totalElements % 2 == 0) {
+            double sumOfMiddleElements = values.get(totalElements / 2) + values.get(totalElements / 2 - 1);
             // calculate average of middle elements
             median = ((double) sumOfMiddleElements) / 2;
         } else {
