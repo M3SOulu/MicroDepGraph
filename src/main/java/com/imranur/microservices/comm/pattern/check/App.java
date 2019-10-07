@@ -370,6 +370,33 @@ public class App {
         double scStandardDeviation = calculateSDDouble(scValues);
         System.out.println("SC Standard Deviation : " + scStandardDeviation);
 
+        AtomicReference<Double> cbmMax = new AtomicReference<>((double) 0);
+        AtomicReference<Double> cbmTotal = new AtomicReference<>((double) 0);
+        ArrayList<Double> cbmValues = new ArrayList<>();
+        CBM.forEach((s, value) -> {
+            if(value != null && !value.equals("N/A")){
+                Double val = Double.valueOf(value);
+                if(val> cbmMax.get()){
+                    cbmMax.set(val);
+                }
+                cbmValues.add(val);
+                cbmTotal.set(cbmTotal.get() + val);
+            }
+        });
+
+        System.out.println("CBM Total : " + cbmTotal);
+        System.out.println("CBM Max : " + cbmMax);
+
+        double cbmAverage = cbmTotal.get() / (double) CBM.size();
+        System.out.println("CBM Average : " + cbmAverage);
+        double cbmMedian = medianDouble(cbmValues);
+        System.out.println("CBM Median : " + cbmMedian);
+
+        double cbmStadDev = calculateSDDouble(cbmValues);
+        System.out.println("CBM Standard Deviation : " + cbmStadDev);
+
+
+
 
 
     }
