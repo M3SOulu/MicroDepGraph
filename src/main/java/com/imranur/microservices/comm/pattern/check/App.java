@@ -17,9 +17,12 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -160,6 +163,7 @@ public class App {
                 siy.setTo(b);
                 siy.setConnected(true);
                 serviceInterDependencies.add(siy);
+                System.out.println("SIY values " + siy.getFrom() + siy.getTo() + siy.isConnected());
             });
         });
         serviceDepNumbers.size();
@@ -173,6 +177,8 @@ public class App {
                 });
             });
         }
+
+
 
         ArrayList<ServiceInOutDegClass> inOutDegClasses = new ArrayList<>();
         serviceMappings.forEach(stringSetMap -> {
@@ -205,11 +211,12 @@ public class App {
 
         System.out.println("Deg avg :" + avgDeg);
         List<Integer> maxDegList = inOutDegClasses.stream().map(ServiceInOutDegClass::getMaxDeg).collect(Collectors.toList());
-        double degStandardDev = calculateSD(maxDegList);
-        System.out.println("Deg Standard deviation :" + degStandardDev);
 
         double medianDeg = median(maxDegList);
         System.out.println("Deg median :" + medianDeg);
+
+        double degStandardDev = calculateSD(maxDegList);
+        System.out.println("Deg Standard deviation :" + degStandardDev);
 
 
 
@@ -330,6 +337,8 @@ public class App {
                 if(scService.get(service.replace("->", ",")) == null) {
                     double lwf = (double) (1 + outValue) / (double) (1 + outValue + integer);
                     double gwf = (double) (outValue + integer) / (double) maxDeg.get();
+                    System.out.println("GWF " + service + gwf);
+                    System.out.println("LWF " + service + lwf);
                     double deg = outValue + integer;
                     double SC = 1 - (1 / deg) * lwf * gwf;
                     //System.out.println(s + "-" + SC);
@@ -395,10 +404,9 @@ public class App {
         double cbmStadDev = calculateSDDouble(cbmValues);
         System.out.println("CBM Standard Deviation : " + cbmStadDev);
 
+        NumberFormat formatter = new DecimalFormat("#0.00");
 
-
-
-
+        System.out.println(maxDeg+"  "+formatter.format(avgDeg)+"  "+formatter.format(medianDeg)+"  "+formatter.format(degStandardDev)+"  "+formatter.format(scTotal.get())+"  "+formatter.format(scMax)+"  "+formatter.format(scAvg)+"  "+formatter.format(scMedian)+"  "+formatter.format(scStandardDeviation)+"  "+formatter.format(cbmTotal.get())+"  "+formatter.format(cbmMax.get())+"  "+formatter.format(cbmAverage)+"  "+formatter.format(cbmMedian)+"  "+formatter.format(cbmStadDev));
     }
 
     public static double calculateSD(List<Integer> numArray)
@@ -455,7 +463,12 @@ public class App {
         int totalElements = values.size();
         // check if total number of scores is even
         if (totalElements % 2 == 0) {
-            double sumOfMiddleElements = values.get(totalElements / 2) + values.get(totalElements / 2 - 1);
+            double sumOfMiddleElements = 0;
+            try {
+                sumOfMiddleElements = values.get(totalElements / 2) + values.get(totalElements / 2 - 1);
+            } catch (IndexOutOfBoundsException e) {
+                System.err.println("IndexOutOfBoundsException: " + e.getMessage());
+            }
             // calculate average of middle elements
             median = ((double) sumOfMiddleElements) / 2;
         } else {
