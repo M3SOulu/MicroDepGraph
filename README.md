@@ -14,6 +14,8 @@ Java jdk8 or higher.
 An example command to run the tool from command line is,
  java -jar microservices-dependency-check.jar /home/myuser/ftgo-application-master ftgo-application-master
  
+
+ 
 # Outputs
 
 After analyzing the project, MicroDepGraph generates dependency graph in three types of export files which are,
@@ -29,5 +31,20 @@ Figure 1. Example MicroDepGraph Output (project spinnaker http://bit.ly/2YQA2S7)
 
 A dataset with different projects analyzed is available on the MicroserviceDataset repository [view](https://github.com/clowee/MicroserviceDataset)
 
+ ## How to cite 
 
+Please, cite as "The Microservice Dataset, Version 1.0 [1]"
+
+[1] Mohammad Imranur Rahman, Sebastiano Panichella, Davide Taibi. A curated Dataset of Microservices-Based Systems. Joint Proceedings of the Summer School on Software Maintenance and Evolution. Tampere, 2019 
+```
+@INPROCEEDINGS{Rahman2019,
+  author = {Rahman, MI.and Taibi, Davide},
+  title = {A curated Dataset of Microservices-Based Systems},
+  booktitle={Joint Proceedings of the Summer School on Software Maintenance and Evolution}, 
+  year={2019}, 
+  month={September},
+  publisher    = {CEUR-WS}
+  location = {Tampere, Finland}
+  }
+```
 
