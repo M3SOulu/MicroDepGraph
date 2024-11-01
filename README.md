@@ -1,3 +1,8 @@
+# Note for replicating EMSE paper
+
+Tool has been compiled with ```mvn clean compile assembly:single```
+
+
 ## Microservice Dependency Graph (MicroDepGraph)
 
 MicroDepGraph analyzes the service dependecies of microservices projects based on docker configuration. It produces output as neo4j graph database and also image of dependency graph as SVG format. It analyzes a project which is in local drive. It will create two folders one is "neo4jData" and another one is "output" which holds the generated image of dependency graph.
